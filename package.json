@@ -1,0 +1,53 @@
+{
+  "name": "marvel-characters-api-gql",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "lint": "eslint .",
+    "fix-lint": "eslint --fix .",
+    "test": "jest --silent --maxWorkers=1",
+    "coverage": "jest --coverage --maxWorkers=1",
+    "start": "node -r esm src/server.js",
+    "dev": "eslint --fix . && nodemon -r esm --inspect src/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Knautiluz/marvel-characters-api-gql.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Knautiluz/marvel-characters-api-gql/issues"
+  },
+  "homepage": "https://github.com/Knautiluz/marvel-characters-api-gql#readme",
+  "dependencies": {
+    "apollo-datasource-rest": "^3.0.2",
+    "esm": "^3.2.25",
+    "graphql-yoga": "^1.18.3",
+    "prom-client": "^13.1.0",
+    "winston": "^3.3.3"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.14.8",
+    "@babel/core": "^7.14.8",
+    "@babel/preset-env": "^7.14.8",
+    "babel-eslint": "^10.1.0",
+    "chai": "^4.3.4",
+    "chai-http": "^4.3.0",
+    "eslint": "^7.31.0",
+    "jest": "^27.0.6",
+    "nock": "^13.1.1",
+    "nodemon": "^2.0.12"
+  },
+  "jest": {
+    "coverageThreshold": {
+      "global": {
+        "branches": 75,
+        "functions": 100,
+        "lines": 85,
+        "statements": 90
+      }
+    }
+  }
+}

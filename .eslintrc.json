@@ -1,0 +1,23 @@
+{
+  "env": {
+    "node": true,
+    "es2020": true,
+    "jest": true
+  },
+  "extends": [
+    "eslint:recommended"
+  ],
+  "parser": "babel-eslint",
+  "parserOptions": {
+    "ecmaVersion": 11,
+    "sourceType": "module"
+  },
+  "rules": {
+    "import/prefer-default-export": "off",
+    "class-methods-use-this": "off",
+    "no-unused-vars": ["error", { "vars": "all", "argsIgnorePattern": "^_"}],
+    "semi": [2, "never"],
+    "quotes": [2, "single"],
+    "object-curly-spacing": [2, "always"]
+  }
+}
