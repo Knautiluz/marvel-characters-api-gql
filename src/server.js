@@ -12,9 +12,7 @@ import characterResolver from './resolvers/characterResolver'
 import characterType from './typeDefs/characterType'
 import CharactersAPI from './api/CharactersAPI'
 import { register, collectDefaultMetrics } from 'prom-client'
-
 import { config } from 'dotenv'
-
 config()
 
 collectDefaultMetrics({ register })
@@ -79,7 +77,7 @@ async function start() {
 }
 
 start().then(() => {
-  console.log(`Servidor iniciado na porta ${process.env.PORT}`)
+  console.log(`🚀 Servidor iniciado na porta ${process.env.PORT}`)
 }).catch(error => {
   console.log(error)
 }) 

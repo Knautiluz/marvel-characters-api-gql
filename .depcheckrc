@@ -1,0 +1,7 @@
+ignores: [
+    "esm",
+    "rxjs",
+    "@babel/*",
+    "@graphql-tools/*",
+    "@jest/*",
+]

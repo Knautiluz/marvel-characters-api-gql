@@ -9,6 +9,20 @@ on:
     branches: [ master ]
 
 jobs:
+  audit:
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v2
+    - name: Run Audit
+      run: yarn audit
+  check-dependencies:
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v2
+    - name: Install Dependencies
+      run: yarn install
+    - name: Run Dependencies-Check
+      run: yarn depcheck
   lint:
     runs-on: ubuntu-latest
     steps:
