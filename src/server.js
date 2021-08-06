@@ -72,13 +72,13 @@ async function start() {
   
   await server.start()
   server.applyMiddleware({ app, path: '/' })
-  await new Promise((resolve, _) => app.listen({ port: process.env.PORT }, resolve))
+  await new Promise((resolve, _) => app.listen(resolve))
 
   return { server, app }
 }
 
 start().then(() => {
-  console.log(`Servidor iniciado na porta ${process.env.PORT}`)
+  console.log('Servidor iniciado!')
 }).catch(error => {
   console.log(error)
 }) 
