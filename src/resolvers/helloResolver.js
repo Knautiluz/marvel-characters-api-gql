@@ -15,7 +15,7 @@ const helloResolver = {
         hello: async (_, __, { dataSources }) => {
           counter.inc()  
           const timer = summary.startTimer()
-          const response = await dataSources().charactersAPI.getIndex()
+          const response = await dataSources.charactersAPI.getIndex()
           timer()
           return response
         }

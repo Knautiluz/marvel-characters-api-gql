@@ -1,13 +1,13 @@
 {
   "name": "marvel-characters-api-gql",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Wrapper API for Marvel Characters REST",
+  "main": "server.js",
   "scripts": {
     "lint": "eslint .",
     "fix-lint": "eslint --fix .",
-    "test": "jest --silent --maxWorkers=1",
-    "coverage": "jest --coverage --maxWorkers=1",
+    "test": "jest --silent",
+    "coverage": "jest --coverage",
     "start": "node -r esm src/server.js",
     "dev": "eslint --fix . && nodemon -r esm --inspect src/server.js"
   },
@@ -23,9 +23,17 @@
   "homepage": "https://github.com/Knautiluz/marvel-characters-api-gql#readme",
   "dependencies": {
     "apollo-datasource-rest": "^3.0.2",
+    "apollo-server-cache-redis": "^3.0.3",
+    "apollo-server-core": "^3.1.2",
+    "apollo-server-express": "^3.1.2",
+    "apollo-server-plugin-response-cache": "^3.1.1",
     "esm": "^3.2.25",
-    "graphql-yoga": "^1.18.3",
+    "express": "^4.17.1",
+    "graphql": "^15.5.1",
+    "graphql-express": "^2.0.2",
+    "ioredis": "^4.27.7",
     "prom-client": "^13.1.0",
+    "rxjs": "6.5.0",
     "winston": "^3.3.3"
   },
   "devDependencies": {
@@ -33,8 +41,7 @@
     "@babel/core": "^7.14.8",
     "@babel/preset-env": "^7.14.8",
     "babel-eslint": "^10.1.0",
-    "chai": "^4.3.4",
-    "chai-http": "^4.3.0",
+    "dotenv": "^10.0.0",
     "eslint": "^7.31.0",
     "jest": "^27.0.6",
     "nock": "^13.1.1",

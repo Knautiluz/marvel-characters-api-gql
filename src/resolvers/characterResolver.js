@@ -18,7 +18,7 @@ const historyResolver = {
           characters_counter.labels({ method: 'GET' }).inc()
           const timer = characters_summary.labels({ method: 'GET' }).startTimer()
           const { name, nameStartsWith, modifiedSince, orderBy, limit, offset } = args
-          const response = await dataSources().charactersAPI.getCharacters(name, nameStartsWith, modifiedSince, orderBy, limit, offset)
+          const response = await dataSources.charactersAPI.getCharacters(name, nameStartsWith, modifiedSince, orderBy, limit, offset)
           timer()
           return response
         },
@@ -26,7 +26,7 @@ const historyResolver = {
           characters_counter.labels({ method: 'GET' }).inc()
           const timer = characters_summary.labels({ method: 'GET' }).startTimer()
           const { id } = args
-          const response = await dataSources().charactersAPI.getCharacterByID(id)
+          const response = await dataSources.charactersAPI.getCharacterByID(id)
           timer()
           return response
         }
@@ -35,21 +35,21 @@ const historyResolver = {
       addNewCharacter: async (_, { character }, { dataSources }) => {
         characters_counter.labels({ method: 'POST' }).inc()
         const timer = characters_summary.labels({ method: 'POST' }).startTimer()
-        const response = await dataSources().charactersAPI.postCharacter(character)
+        const response = await dataSources.charactersAPI.postCharacter(character)
         timer()
         return response
       },
       updateExistingCharacter: async (_, { id, character }, { dataSources }) => {
         characters_counter.labels({ method: 'PUT' }).inc()
         const timer = characters_summary.labels({ method: 'PUT' }).startTimer()
-        const response = await dataSources().charactersAPI.putCharacter(id, character)
+        const response = await dataSources.charactersAPI.putCharacter(id, character)
         timer()
         return response
       },
       deleteExistingCharacter: async (_, { id }, { dataSources }) => {
         characters_counter.labels({ method: 'DELETE' }).inc()
         const timer = characters_summary.labels({ method: 'DELETE' }).startTimer()
-        const response = await dataSources().charactersAPI.deleteCharacter(id)
+        const response = await dataSources.charactersAPI.deleteCharacter(id)
         timer()
         return response
       }

@@ -14,7 +14,6 @@ class CharactersAPI extends RESTDataSource {
   constructor() {
     super()
     this.baseURL = 'https://knautiluz-characters.herokuapp.com'
-    this.initialize({})
   }
 
   async getIndex() {

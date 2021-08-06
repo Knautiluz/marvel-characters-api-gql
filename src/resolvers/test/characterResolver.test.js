@@ -1,68 +1,36 @@
-import chai from 'chai'
-import chaiHttp from 'chai-http'
-import appPromise from '../../server'
 import nock from 'nock'
-import { beforeAll, afterAll } from '@jest/globals'
-
-let app
-
-const { expect } = chai
-chai.use(chaiHttp)
+import { makeExecutableSchema } from '@graphql-tools/schema'
+import queryType from '../../typeDefs/query'
+import mutationType from '../../typeDefs/mutation'
+import characterType from '../../typeDefs/characterType'
+import characterResolver from '../characterResolver'
+import { graphql } from 'graphql'
+import CharactersAPI from '../../api/CharactersAPI'
+import { beforeEach, expect } from '@jest/globals'
 
 describe('should resolve all queries and mutation', () => {
-  beforeAll(async () => {
-    app = await appPromise
-  })
-  afterAll(() => {
-    app.close()
-  })
-
-  it('should get heartbeat', async () => {
-    const res = await chai.request(app).get('/')
-    expect(res).to.have.status(200)
-    expect(res.text).to.be.an('string').that.deep.eq('Kon\'nichiwa Worudo, access /graphql to play with me.')
+  const schema = makeExecutableSchema({
+    typeDefs: [
+      queryType, mutationType, characterType
+    ],
+    resolvers: [
+      characterResolver
+    ]
   })
 
-  it('should get metrics headers', async () => {
-    const res = await chai.request(app).get('/metrics')
-    expect(res).to.have.status(200)
-    expect(res.text).to.be.an('string')
-    expect(res.header['content-type']).to.be.an.string('text/plain; charset=utf-8; version=0.0.4')
+  let dataSources
+  beforeEach(() => {
+    const CharAPI = new CharactersAPI()
+    CharAPI.initialize({})
+    dataSources = { charactersAPI: CharAPI }
   })
 
   it('should post new character', async () => {
-    const mutation = 'addNewCharacter(character: { name: "Odin" description: "The brabo of nordic mythology" urls: { type: "comic", url: "https://knautiluz.net/characters/Odin" } })'
     nock('https://knautiluz-characters.herokuapp.com').post('/characters').reply(201)
-    const res = await chai.request(app).post('/').send({ query: `mutation { ${mutation} }` })
-    expect(res).to.have.status(200)
-    expect(res.body).to.be.an('object').that.deep.eq({ data: { addNewCharacter: true } })
-  })
-
-  it('should post new character and get null when conflit', async () => {
     const mutation = 'addNewCharacter(character: { name: "Odin" description: "The brabo of nordic mythology" urls: { type: "comic", url: "https://knautiluz.net/characters/Odin" } })'
-    nock('https://knautiluz-characters.herokuapp.com').post('/characters').reply(409)
-    const res = await chai.request(app).post('/').send({ query: `mutation { ${mutation} }` })
-    expect(res).to.have.status(200)
-    const response = {
-      data: {
-        addNewCharacter: null
-      },
-      errors: [
-        {
-          locations: [
-            {
-              column: 12,
-              line: 1,
-            },
-          ],
-          message: '[Conflict] this character already exists.',
-          path: [
-            'addNewCharacter',
-          ],
-        },
-      ]
-    }
-    expect(res.body).to.be.an('object').that.deep.eq(response)
+    const query = `mutation { ${mutation} }`
+    const result = await graphql(schema, query, {}, { dataSources })
+    expect(result.data).toEqual({ addNewCharacter: true })
   })
 
   it('should get single character by id', async () => {
@@ -76,51 +44,17 @@ describe('should resolve all queries and mutation', () => {
       thumbnail: null,
       comics: [],
     }
-    const query = 'character(id: 1) { id name description modified resourceURI urls { type url } thumbnail { path extension } comics { available returned collectionURI items { resourceURI name } }}'
     nock('https://knautiluz-characters.herokuapp.com').get('/characters/1').reply(200, character)
-    const res = await chai.request(app).post('/').send({ query: `{ ${query} }` })
-    expect(res).to.have.status(200)
-    expect(res.body).to.be.an('object').that.deep.eq({ data: { character } })
-  })
-
-  it('should get single character by id and be null when error is catch and must have errors array', async () => {
-    const query = 'character(id: 1) { id name description modified resourceURI urls { type url } thumbnail { path extension } comics { available returned collectionURI items { resourceURI name } }}'
-    nock('https://knautiluz-characters.herokuapp.com').get('/characters/1').reply(404)
-    const res = await chai.request(app).post('/').send({ query: `{ ${query} }` })
-    expect(res).to.have.status(200)
-    const response = { 
-      data: { 
-        character: null
-      },
-      errors: [
-        {
-          locations: [
-            {
-              column: 3,
-              line: 1,
-            },
-          ],
-          message: '[Not Found] this character doesn\'t exist',
-          path: [
-            'character',
-          ],
-        },
-      ]
-    }
-    expect(res.body).to.be.an('object').that.deep.eq(response)
+    const query = 'query { character(id: 1) { id name description modified resourceURI urls { type url } thumbnail { path extension } comics { available returned collectionURI items { resourceURI name } }} }'
+    const result = await graphql(schema, query, {}, { dataSources })
+    expect(result.data).toEqual({ character })
   })
 
   it('should get single character by id and be null when error is catch', async () => {
-    const query = 'character(id: 1) { id name description modified resourceURI urls { type url } thumbnail { path extension } comics { available returned collectionURI items { resourceURI name } }}'
     nock('https://knautiluz-characters.herokuapp.com').get('/characters/1').reply(401)
-    const res = await chai.request(app).post('/').send({ query: `{ ${query} }` })
-    expect(res).to.have.status(200)
-    const response = { 
-      data: { 
-        character: null
-      }
-    }
-    expect(res.body).to.be.an('object').that.deep.eq(response)
+    const query = 'query { character(id: 1) { id name description modified resourceURI urls { type url } thumbnail { path extension } comics { available returned collectionURI items { resourceURI name } }} }'
+    const result = await graphql(schema, query, {}, { dataSources })
+    expect(result.data).toEqual({ character: null })
   })
 
 
@@ -157,11 +91,10 @@ describe('should resolve all queries and mutation', () => {
           comics: [],
         }
     ]
-    const query = 'characters { characters { id name description modified resourceURI urls { type url } thumbnail { path extension } comics { available returned collectionURI items { resourceURI name } }}}'
     nock('https://knautiluz-characters.herokuapp.com').get('/characters').reply(200, { data: { results: characters } })
-    const res = await chai.request(app).post('/').send({ query: `{ ${query} }` })
-    expect(res).to.have.status(200)
-    expect(res.body).to.be.an('object').that.deep.eq({ data: { 'characters': { characters } } })
+    const query = 'query { characters { characters { id name description modified resourceURI urls { type url } thumbnail { path extension } comics { available returned collectionURI items { resourceURI name } }}} }'
+    const result = await graphql(schema, query, {}, { dataSources })
+    expect(result.data).toEqual({ 'characters': { characters } })
   })
 
   it('should get multiple characters with query params', async () => {
@@ -182,7 +115,7 @@ describe('should resolve all queries and mutation', () => {
           comics: [],
         }
     ]
-    const query = 'characters(name: "Zoro" nameStartsWith: "Z" modifiedSince: "30/08/1992" orderBy: "-name" limit: 10 offset: 10) { characters { id name description modified resourceURI urls { type url } thumbnail { path extension } comics { available returned collectionURI items { resourceURI name } }}}'
+    const query = 'query { characters(name: "Zoro" nameStartsWith: "Z" modifiedSince: "30/08/1992" orderBy: "-name" limit: 10 offset: 10) { characters { id name description modified resourceURI urls { type url } thumbnail { path extension } comics { available returned collectionURI items { resourceURI name } }}} } '
     nock('https://knautiluz-characters.herokuapp.com').get('/characters').query({
       name: 'Zoro',
       nameStartsWith: 'Z',
@@ -191,98 +124,89 @@ describe('should resolve all queries and mutation', () => {
       limit: 10,
       offset:10
     }).reply(200, { data: { results: characters } })
-    const res = await chai.request(app).post('/').send({ query: `{ ${query} }` })
-    expect(res).to.have.status(200)
-    expect(res.body).to.be.an('object').that.deep.eq({ data: { 'characters': { characters } } })
+    const result = await graphql(schema, query, {}, { dataSources })
+    expect(result.data).toEqual({ 'characters': { characters } })
   })
 
   it('should get multiple characters then get null when server error', async () => {
-    const query = 'characters { characters { id name description modified resourceURI urls { type url } thumbnail { path extension } comics { available returned collectionURI items { resourceURI name } }}}'
     nock('https://knautiluz-characters.herokuapp.com').get('/characters').reply(500)
-    const res = await chai.request(app).post('/').send({ query: `{ ${query} }` })
-    expect(res).to.have.status(200)
-    expect(res.body).to.be.an('object').that.deep.eq({ data: { 'characters': null } })
+    const query = 'query { characters { characters { id name description modified resourceURI urls { type url } thumbnail { path extension } comics { available returned collectionURI items { resourceURI name } }}} }'
+    const result = await graphql(schema, query, {}, { dataSources })
+    expect(result.data).toEqual({ 'characters': null })
   })
 
 
   it('should get empty array for get characters when no characters was found', async () => {
-    const query = 'characters { characters { id name description modified resourceURI urls { type url } thumbnail { path extension } comics { available returned collectionURI items { resourceURI name } }}}'
+    const query = 'query { characters { characters { id name description modified resourceURI urls { type url } thumbnail { path extension } comics { available returned collectionURI items { resourceURI name } }}} }'
     nock('https://knautiluz-characters.herokuapp.com').get('/characters').reply(200, { data: {} })
-    const res = await chai.request(app).post('/').send({ query: `{ ${query} }` })
-    expect(res).to.have.status(200)
-    expect(res.body).to.be.an('object').that.deep.eq({ data: { 'characters': { characters: [] } } })
+    const result = await graphql(schema, query, {}, { dataSources })
+    expect(result.data).toEqual({ 'characters': { characters: [] } })
   })
 
   it('should update single character by id', async () => {
-    const mutation = 'updateExistingCharacter(id: 1, character: { name: "Worudo", description: "The Worudo!" } )'
+    const query = 'mutation { updateExistingCharacter(id: 1, character: { name: "Worudo", description: "The Worudo!" } ) }'
     nock('https://knautiluz-characters.herokuapp.com').put('/characters/1').reply(204)
-    const res = await chai.request(app).post('/').send({ query: `mutation { ${mutation} }` })
-    expect(res).to.have.status(200)
-    expect(res.body).to.be.an('object').that.deep.eq({ data: { updateExistingCharacter: true } })
+    const result = await graphql(schema, query, {}, { dataSources })
+    expect(result.data).toEqual({ updateExistingCharacter: true })
   })
-
-  it('should return null when caracter not exist and then return data null with error response', async () => {
-    const mutation = 'updateExistingCharacter(id: 1, character: { name: "Worudo", description: "The Worudo!" } )'
-    nock('https://knautiluz-characters.herokuapp.com').put('/characters/1').reply(404)
-    const res = await chai.request(app).post('/').send({ query: `mutation { ${mutation} }` })
-    expect(res).to.have.status(200)
-    const response = {
-      data: {
-        updateExistingCharacter: null
-      },
-      errors: [
-        {
-          locations: [
-            {
-              column: 12,
-              line: 1,
-            },
-          ],
-          message: '[Not Found] this character doesn\'t exist',
-          path: [
-            'updateExistingCharacter',
-          ],
-        },
-      ]
-    }
-    expect(res.body).to.be.an('object').that.deep.eq(response)
-  })
-
-
 
   it('should delete single character by id', async () => {
-    const mutation = 'deleteExistingCharacter(id: 1)'
+    const query = 'mutation { deleteExistingCharacter(id: 1) } '
     nock('https://knautiluz-characters.herokuapp.com').delete('/characters/1').reply(200)
-    const res = await chai.request(app).post('/').send({ query: `mutation { ${mutation} }` })
-    expect(res).to.have.status(200)
-    expect(res.body).to.be.an('object').that.deep.eq({ data: { deleteExistingCharacter: true } })
+    const result = await graphql(schema, query, {}, { dataSources })
+    expect(result.data).toEqual({ deleteExistingCharacter: true })
+  })
+
+})
+
+describe('should resolve successfuly all errors', () => {
+
+  const schema = makeExecutableSchema({
+    typeDefs: [
+      queryType, mutationType, characterType
+    ],
+    resolvers: [
+      characterResolver
+    ]
+  })
+
+  let dataSources
+  beforeEach(() => {
+    const CharAPI = new CharactersAPI()
+    CharAPI.initialize({})
+    dataSources = { charactersAPI: CharAPI }
   })
 
   it('should return null when caracter not exist and then return  data null with error response', async () => {
-    const mutation = 'deleteExistingCharacter(id: 1)'
+    const query = 'mutation { deleteExistingCharacter(id: 1) }'
     nock('https://knautiluz-characters.herokuapp.com').delete('/characters/1').reply(404)
-    const res = await chai.request(app).post('/').send({ query: `mutation { ${mutation} }` })
-    expect(res).to.have.status(200)
-    const response = {
-      data: {
-        deleteExistingCharacter: null
-      },
-      errors: [
-        {
-          locations: [
-            {
-              column: 12,
-              line: 1,
-            },
-          ],
-          message: '[Not Found] this character doesn\'t exist',
-          path: [
-            'deleteExistingCharacter',
-          ],
-        },
-      ]
-    }
-    expect(res.body).to.be.an('object').that.deep.eq(response)
+    const result = await graphql(schema, query, {}, { dataSources })
+    expect(result.data).toEqual({ deleteExistingCharacter: null })
+    expect(result.errors[0].message).toEqual('[Not Found] this character doesn\'t exist')
   })
 
+  it('should return null when caracter not exist and then return data null with error response', async () => {
+    nock('https://knautiluz-characters.herokuapp.com').put('/characters/1').reply(404)
+    const query = 'mutation { updateExistingCharacter(id: 1, character: { name: "Worudo", description: "The Worudo!" } ) }'
+    const result = await graphql(schema, query, {}, { dataSources })
+    expect(result.data).toEqual({ updateExistingCharacter: null })
+    expect(result.errors[0].message).toEqual('[Not Found] this character doesn\'t exist')
+  })
+
+  it('should get single character by id and be null when error is catch and must have errors array', async () => {
+    nock('https://knautiluz-characters.herokuapp.com').get('/characters/1').reply(404)
+    const query = 'query { character(id: 1) { id name description modified resourceURI urls { type url } thumbnail { path extension } comics { available returned collectionURI items { resourceURI name } }} }'
+    const result = await graphql(schema, query, {}, { dataSources })
+    expect(result.data).toEqual({ character: null })
+    expect(result.errors[0].message).toEqual('[Not Found] this character doesn\'t exist')
+  })
+
+  it('should post new character and get null when conflit', async () => {
+    nock('https://knautiluz-characters.herokuapp.com').post('/characters').reply(409)
+    const mutation = 'addNewCharacter(character: { name: "Odin" description: "The brabo of nordic mythology" urls: { type: "comic", url: "https://knautiluz.net/characters/Odin" } })'
+    const query = `mutation { ${mutation} }`
+    const result = await graphql(schema, query, {}, { dataSources })
+    expect(result.data).toEqual({ addNewCharacter: null })
+    expect(result.errors[0].message).toEqual('[Conflict] this character already exists.')
+  })
 })

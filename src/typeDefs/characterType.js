@@ -1,5 +1,9 @@
-const characterType = `
+import { gql } from 'apollo-server-core'
+
+const characterType = gql`
+  
   extend type Query {
+    
     characters(
         name: String
         nameStartsWith: String
@@ -8,8 +12,10 @@ const characterType = `
         limit: Int
         offset: Int
     ): Characters
+
     character(id: Int!): Character
   }
+
   extend type Mutation {
     addNewCharacter(character: InputCharacter!): Boolean
   }
@@ -22,25 +28,26 @@ const characterType = `
     deleteExistingCharacter(id: Int!): Boolean
   }
 
-  type Item {
+  type Item @cacheControl(inheritMaxAge: true) {
     resourceURI: String
     name: String
   }
-  type Comic {
+  type Comic @cacheControl(inheritMaxAge: true) {
     available: Int
     returned: Int
     collectionURI: String
     items: [Item]
   }
-  type Thumbnail {
+  type Thumbnail @cacheControl(inheritMaxAge: true) {
     path: String
     extension: String
   }
-  type TypeUrl {
+  type TypeUrl @cacheControl(inheritMaxAge: true) {
     type: String
     url: String
   }
-  type Character {
+  
+  type Character @cacheControl(maxAge: 360) {
     id: Int
     name: String
     description: String
@@ -50,6 +57,7 @@ const characterType = `
     thumbnail: Thumbnail
     comics: [Comic]
   }
+
   type Characters {
     characters: [Character]
   }
