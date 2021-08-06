@@ -59,8 +59,9 @@ async function start() {
       }),
       ApolloServerPluginLandingPageGraphQLPlayground({
         endpoint: '/playground',
-      })
+      }),
     ],
+    introspection: true,
     dataSources: () => ({ charactersAPI: new CharactersAPI() }),
     typeDefs: [
       query, mutation, characterType, helloType
